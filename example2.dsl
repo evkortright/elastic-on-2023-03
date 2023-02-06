@@ -1,4 +1,8 @@
 # Example 2. shipments
+# Explore data using grok
+# create a composite runtime field
+# calculate a new field from existing data: distance
+# use the field
 
 GET shipments/_mapping
 
