@@ -1,0 +1,15 @@
+- A runtime field is a field that is evaluated at the time it is used in a search
+  + Through runtime fields, you can add new fields to your data without reindexing
+  
+- You can use runtime fields to explore data and prototype new fields
+
+- You can use runtime fields to override other fields with new values or types
+
+- Runtime fields are created without impact to the index schema and can be modified at any time
+
+- A runtime field can be converted to a permanent, indexed field
+
+- To define a runtime field, use a runtime_fields clause in a search or a runtime clause in the index mapping
+
+- To give the field a value, use a Painless script or, if you do not provide a script, the value is obtained from a field of the same name in _source
+
