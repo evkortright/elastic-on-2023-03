@@ -1,14 +1,49 @@
-# Example 2. shipments
+# Example 3. shipments - more parsing -- calculate a new field
 # Explore data using grok
 # create a composite runtime field
 # calculate a new field from existing data: distance
 # use the field
 
+GET shipments/_search
+
 GET shipments/_mapping
 
 GET shipments/_search
 {
-  "size": 0, 
+  "size": 5,
+  "_source": false, 
+  "fields": [
+    "direction.origin",
+    "direction.destination"
+  ],
+  "runtime_mappings": {
+    "direction": {
+      "type": "composite",
+      "script": {
+        "lang": "painless",
+        "source": """
+          Map origin = grok("\\('%{NUMBER:lat:double}', '%{NUMBER:lon:double}'").extract(params['_source']['origin']);
+          Map destination = grok("\\('%{NUMBER:lat:double}', '%{NUMBER:lon:double}'").extract(params['_source']['destination']);
+          emit(["origin": [origin.lon, origin.lat], "destination": [destination.lon, destination.lat]]);
+          """
+      },
+      "fields": {
+        "origin": {
+          "type": "geo_point"
+        },
+        "destination": {
+          "type": "geo_point"
+        }
+      }
+    }
+  }
+}
+
+
+GET shipments/_search
+{
+  "_source": true, 
+  "size": 5, 
   "fields": [
     "direction.origin",
     "direction.destination",
@@ -67,118 +102,7 @@ GET shipments/_search
           """
         }
       }
-    },
-    "aggs": {
-      "by_distance": {
-        "range": {
-          "field": "distance",
-          "ranges": [
-            {
-              "from": 0,
-              "to": 50
-            },
-            {
-              "from": 50,
-              "to": 500
-            },
-            {
-              "from": 500,
-              "to": 1000
-            },
-            {
-              "from": 1000,
-              "to": 10000
-            },
-            {
-              "from": 10000
-            }
-          ]
-        },
-        "aggs": {
-          "shipments": {
-            "top_hits": {
-              "size": 1
-            }
-          }
-        }
-      }
     }
-}
-
-
-GET shipments/_search
-{
-  "size": 0, 
-  "aggs": {
-    "by_distance": {
-      "range": {
-        "field": "distance",
-        "ranges": [
-          {
-            "from": 0,
-            "to": 50
-          },
-          {
-            "from": 50,
-            "to": 100
-          },
-          {
-            "from": 50,
-            "to": 100
-          },
-          {
-            "from": 100,
-            "to": 500
-          },
-          {
-            "from": 500,
-            "to": 1000
-          },
-          {
-            "from": 1000
-          }
-        ]
-      }
-    }
-  }
-}
-
-PUT shipments/_mapping
-{
-  "runtime": {
-        "direction": {
-      "type": "composite",
-      "script": {
-        "lang": "painless",
-        "source": """
-          Map origin = grok("\\('%{NUMBER:lat:double}', '%{NUMBER:lon:double}'").extract(params['_source']['origin']);
-          Map destination = grok("\\('%{NUMBER:lat:double}', '%{NUMBER:lon:double}'").extract(params['_source']['destination']);
-          emit(["origin": [origin.lon, origin.lat], "destination": [destination.lon, destination.lat]]);
-        """
-      },
-      "fields": {
-        "origin": {
-          "type": "geo_point"
-        },
-        "destination": {
-          "type": "geo_point"
-        }
-      }
-    }
-  }
-}
-
-GET shipments/_search
-{
-  "_source": false,
-  "fields": [
-    "*"
-  ],
-  "query": {
-    "match": {
-      "origin": "Shreveport"
-    }
-  }
 }
 
 PUT shipments/_mapping
@@ -237,8 +161,8 @@ PUT shipments/_mapping
       }
     }
   }
+  
 }
-
 
 GET shipments/_search
 {
